@@ -60,7 +60,7 @@ const Footer = () => {
                     {/* Columna de información */}
                     <div className='text-center'>
                         <h2 className="text-lg font-bold mb-4">Sobre Nosotros</h2>
-                        <Link href="/nosotros">
+                        <Link href="/contacto">
                             Aprende más sobre TempoSmart
                         </Link>
                     </div>

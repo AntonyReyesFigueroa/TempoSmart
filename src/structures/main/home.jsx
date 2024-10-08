@@ -73,13 +73,15 @@ const Home = () => {
                                 height={200}
                                 className="rounded-lg mb-4 mt-4 m-auto"
                             />
-                            <h3 className="text-2xl font-semibold">Café Espresso</h3>
-                            <p className="text-gray-700">Un delicioso café para comenzar el día.</p>
-                            <Link href="/pedidos">
-                                <button className="mt-4 px-4 py-2 bg-yellow-400 text-brown-800 rounded hover:bg-yellow-300 transition duration-300">
-                                    Comprar Aquí
-                                </button>
-                            </Link>
+                            <h3 className="text-2xl font-semibold text-center">Café Espresso</h3>
+                            <p className="text-gray-700 text-center">Un delicioso café para comenzar el día.</p>
+                            <div className="flex justify-center">
+                                <Link href="/pedidos">
+                                    <button className="mt-4 px-4 py-2 bg-yellow-950 text-gray-50 text-brown-800 rounded hover:bg-red-900 transition duration-300">
+                                        Comprar Aquí
+                                    </button>
+                                </Link>
+                            </div>
                         </motion.div>
 
                         {/* Producto 2 */}
@@ -92,15 +94,17 @@ const Home = () => {
                                 alt="Latte Vainilla"
                                 width={300}
                                 height={200}
-                                className="rounded-lg mb-4  mt-4 m-auto"
+                                className="rounded-lg mb-4 mt-4 m-auto"
                             />
-                            <h3 className="text-2xl font-semibold">Latte Vainilla</h3>
-                            <p className="text-gray-700">Disfruta del toque suave y dulce de la vainilla.</p>
-                            <Link href="/pedidos">
-                                <button className="mt-4 px-4 py-2 bg-yellow-400 text-brown-800 rounded hover:bg-yellow-300 transition duration-300">
-                                    Comprar Aquí
-                                </button>
-                            </Link>
+                            <h3 className="text-2xl font-semibold text-center">Latte Vainilla</h3>
+                            <p className="text-gray-700 text-center">Disfruta del toque suave y dulce de la vainilla.</p>
+                            <div className="flex justify-center">
+                                <Link href="/pedidos">
+                                    <button className="mt-4 px-4 py-2 bg-yellow-950 text-gray-50 text-brown-800 rounded hover:bg-red-900 transition duration-300">
+                                        Comprar Aquí
+                                    </button>
+                                </Link>
+                            </div>
                         </motion.div>
 
                         {/* Producto 3 */}
@@ -113,16 +117,27 @@ const Home = () => {
                                 alt="Postre Tres Leches"
                                 width={300}
                                 height={200}
-                                className="rounded-lg mb-4  mt-4 m-auto"
+                                className="rounded-lg mb-4 mt-4 m-auto"
                             />
-                            <h3 className="text-2xl font-semibold">Postre Tres Leches</h3>
-                            <p className="text-gray-700">Un clásico dulce que siempre encanta.</p>
-                            <Link href="/pedidos">
-                                <button className="mt-4 px-4 py-2 bg-yellow-400 text-brown-800 rounded hover:bg-yellow-300 transition duration-300">
-                                    Comprar Aquí
-                                </button>
-                            </Link>
+                            <h3 className="text-2xl font-semibold text-center">Postre Tres Leches</h3>
+                            <p className="text-gray-700 text-center">Un clásico dulce que siempre encanta.</p>
+                            <div className="flex justify-center">
+                                <Link href="/pedidos">
+                                    <button className="mt-4 px-4 py-2 bg-yellow-950 text-gray-50 text-brown-800 rounded hover:bg-red-900 transition duration-300">
+                                        Comprar Aquí
+                                    </button>
+                                </Link>
+                            </div>
                         </motion.div>
+                    </div>
+
+                    {/* Botón "Ver más" */}
+                    <div className="flex justify-center mt-12">
+                        <Link href="/pedidos">
+                            <button className="px-6 py-3 bg-yellow-400 text-brown-800 rounded-lg text-lg font-semibold shadow-lg hover:bg-yellow-300 hover:scale-105 transition-transform duration-300">
+                                •••Ver más
+                            </button>
+                        </Link>
                     </div>
                 </div>
             </section>
