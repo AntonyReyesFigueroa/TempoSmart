@@ -74,7 +74,7 @@ const Header = () => {
 
                     {/* Menu for desktop */}
                     <motion.nav
-                        className="hidden md:flex space-x-6"
+                        className="hidden md:flex space-x-6 items-center"
                         initial={{ opacity: 0, x: 50 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ duration: 0.5, delay: 0.6 }}
@@ -106,26 +106,26 @@ const Header = () => {
                         >
                             <Link href="/contacto" className="text-md font-light text-brown-700 hover:text-brown-900 transition duration-300 ease-in-out">Contacto</Link>
                         </motion.div>
-                    </motion.nav>
 
-                    {/* Login/Logout Button */}
-                    <div>
-                        {isLoggedIn ? (
-                            <button
-                                onClick={handleLogout}
-                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-400 transition duration-300"
-                            >
-                                Cerrar Sesión
-                            </button>
-                        ) : (
-                            <button
-                                onClick={handleLogin}
-                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400 transition duration-300"
-                            >
-                                Iniciar Sesión
-                            </button>
-                        )}
-                    </div>
+                        {/* Login/Logout Button for desktop */}
+                        <motion.div>
+                            {isLoggedIn ? (
+                                <button
+                                    onClick={handleLogout}
+                                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-400 transition duration-300"
+                                >
+                                    Cerrar Sesión
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleLogin}
+                                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400 transition duration-300"
+                                >
+                                    Iniciar Sesión
+                                </button>
+                            )}
+                        </motion.div>
+                    </motion.nav>
 
                     {/* Hamburger Menu for mobile */}
                     <motion.button
@@ -165,6 +165,25 @@ const Header = () => {
                             <li><Link href="/pedidos" className="hover:text-brown-900 transition duration-300 ease-in-out">Pedidos</Link></li>
                             <li><Link href="/agregar-productos" className="hover:text-brown-900 transition duration-300 ease-in-out">Agregar Productos</Link></li>
                             <li><Link href="/contacto" className="hover:text-brown-900 transition duration-300 ease-in-out">Contacto</Link></li>
+
+                            {/* Login/Logout Button in mobile menu */}
+                            <li>
+                                {isLoggedIn ? (
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full text-left px-4 py-2 bg-red-500 text-white rounded hover:bg-red-400 transition duration-300"
+                                    >
+                                        Cerrar Sesión
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleLogin}
+                                        className="w-full text-left px-4 py-2 text-center bg-green-500 text-white rounded hover:bg-green-400 transition duration-300"
+                                    >
+                                        Iniciar Sesión
+                                    </button>
+                                )}
+                            </li>
                         </ul>
                     </motion.nav>
                 )}
