@@ -9,21 +9,20 @@ const AgregarProductos = () => {
     const [formData, setFormData] = useState({
         nombre: '',
         precio: '',
-        description: '',  // Nuevo campo descripción
-        img: '/cafe.png',  // Imagen por defecto
+        description: '',
+        categoria: '',
+        img: '/cafe.png',
     });
     const [message, setMessage] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [currentProducto, setCurrentProducto] = useState(null);
-
+    const [loading, setLoading] = useState(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_PRODUCTOS;
 
     // Manejar los cambios en los inputs
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Limitar la cantidad de caracteres en nombre y descripción
         if (name === 'nombre' && value.length > 50) return;
         if (name === 'description' && value.length > 300) return;
 
@@ -51,6 +50,11 @@ const AgregarProductos = () => {
             return false;
         }
 
+        if (!formData.categoria) {
+            Swal.fire('Error', 'Debes seleccionar una categoría', 'error');
+            return false;
+        }
+
         if (!formData.img) {
             Swal.fire('Error', 'Debes subir una imagen del producto', 'error');
             return false;
@@ -59,7 +63,7 @@ const AgregarProductos = () => {
         return true;
     };
 
-    // Enviar el producto a la API de Google Apps Script
+    // Enviar el producto a la API de Google Apps Script (POST o PUT)
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -68,30 +72,28 @@ const AgregarProductos = () => {
         setMessage('Enviando...');
 
         try {
-            // Convertir los datos del formulario a formato URL-encoded
-            const formDataString = Object.keys(formData)
-                .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(formData[key])}`)
-                .join('&');
-
+            const method = isEditing ? 'PUT' : 'POST';
             const response = await fetch(apiUrl, {
-                method: 'POST',
-                body: formDataString,
+                method: method,
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify(formData),
             });
 
             if (response.ok) {
-                Swal.fire('Producto agregado', '', 'success');
-                setMessage('Producto agregado exitosamente');
+                Swal.fire(isEditing ? 'Producto actualizado' : 'Producto agregado', '', 'success');
+                setMessage(isEditing ? 'Producto actualizado exitosamente' : 'Producto agregado exitosamente');
                 setFormData({
                     nombre: '',
                     precio: '',
                     description: '',
-                    img: '/cafe.png',  // Restablecer la imagen por defecto
+                    categoria: '',
+                    img: '/cafe.png',
                 });
-                setShowModal(false);  // Cerrar el modal
-                fetchProductos();  // Refrescar la lista de productos
+                setShowModal(false);
+                setIsEditing(false);
+                fetchProductos();
             } else {
                 throw new Error('Error en el envío');
             }
@@ -101,8 +103,9 @@ const AgregarProductos = () => {
         }
     };
 
-    // Función para obtener la lista de productos (GET)
+    // Obtener la lista de productos (GET)
     const fetchProductos = async () => {
+        setLoading(true);
         try {
             const response = await fetch(apiUrl);
             const data = await response.json();
@@ -111,7 +114,54 @@ const AgregarProductos = () => {
             console.error('Error al obtener los productos:', error);
             Swal.fire('Error', 'No se pudo obtener la lista de productos', 'error');
         }
+        setLoading(false);
     };
+
+    // Actualizar un producto (PUT)
+    const actualizarProducto = async (producto) => {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(producto),
+            });
+            if (response.ok) {
+                Swal.fire('Producto actualizado', '', 'success');
+                fetchProductos();
+            } else {
+                Swal.fire('Error', 'No se pudo actualizar el producto', 'error');
+            }
+        } catch (error) {
+            console.error('Error al actualizar el producto:', error);
+        }
+    };
+
+    // Eliminar un producto (DELETE)
+    // Función para eliminar un producto (DELETE)
+    const eliminarProducto = async (id) => {
+        try {
+            const response = await fetch(`${apiUrl}?id=${id}`, { // Pasamos el ID como parámetro de URL
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                // Puedes también pasar el ID en el cuerpo si es necesario
+                body: JSON.stringify({ id }),
+            });
+            if (response.ok) {
+                Swal.fire('Producto eliminado', '', 'success');
+                fetchProductos();  // Refresca la lista de productos
+            } else {
+                Swal.fire('Error', 'No se pudo eliminar el producto', 'error');
+            }
+        } catch (error) {
+            console.error('Error al eliminar el producto:', error);
+        }
+    };
+
+
 
     useEffect(() => {
         fetchProductos();
@@ -120,7 +170,6 @@ const AgregarProductos = () => {
     return (
         <div className="flex justify-center items-center min-h-screen ">
             <div className="w-full max-w-5xl">
-                {/* Botón para abrir el modal */}
                 <div className="flex justify-between items-center mb-6">
                     <button
                         onClick={() => setShowModal(true)}
@@ -130,13 +179,11 @@ const AgregarProductos = () => {
                     </button>
                 </div>
 
-                {/* Modal para agregar/editar productos */}
                 {showModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50 overflow-y-auto transition-opacity duration-300">
                         <div className="bg-white rounded-lg p-8 w-full max-w-lg space-y-6 h-auto max-h-screen overflow-y-auto">
                             <h2 className="text-2xl font-bold text-center">{isEditing ? 'Editar Producto' : 'Añadir Producto'}</h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                {/* Nombre del Producto */}
                                 <div>
                                     <label className="block text-gray-700 font-semibold mb-2">Nombre del Producto:</label>
                                     <input
@@ -150,7 +197,6 @@ const AgregarProductos = () => {
                                     <small className="text-gray-500">{formData.nombre.length}/50</small>
                                 </div>
 
-                                {/* Precio del Producto */}
                                 <div>
                                     <label className="block text-gray-700 font-semibold mb-2">Precio (S/):</label>
                                     <input
@@ -166,7 +212,6 @@ const AgregarProductos = () => {
                                     />
                                 </div>
 
-                                {/* Descripción del Producto */}
                                 <div>
                                     <label className="block text-gray-700 font-semibold mb-2">Descripción:</label>
                                     <textarea
@@ -179,12 +224,26 @@ const AgregarProductos = () => {
                                     <small className="text-gray-500">{formData.description.length}/300</small>
                                 </div>
 
-                                {/* Subir imagen del Producto */}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">Categoría:</label>
+                                    <select
+                                        name="categoria"
+                                        value={formData.categoria}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-green-500 transition duration-300"
+                                        required
+                                    >
+                                        <option value="">Selecciona una categoría</option>
+                                        <option value="Cafés">Cafés</option>
+                                        <option value="Tés y Bebidas Especiales">Tés y Bebidas Especiales</option>
+                                        <option value="Panadería y Bocadillos">Panadería y Bocadillos</option>
+                                    </select>
+                                </div>
+
                                 <div>
                                     <ComponentSubirImg setGetUrlImage={(url) => setFormData({ ...formData, img: url })} getUrlImage={formData.img} />
                                 </div>
 
-                                {/* Botones de enviar y cancelar */}
                                 <div className="flex justify-center space-x-4">
                                     <button
                                         type="submit"
@@ -200,6 +259,7 @@ const AgregarProductos = () => {
                                                 nombre: '',
                                                 precio: '',
                                                 description: '',
+                                                categoria: '',
                                                 img: '/cafe.png',
                                             });
                                         }}
@@ -213,33 +273,61 @@ const AgregarProductos = () => {
                     </div>
                 )}
 
-                {/* Lista de productos */}
                 <div className="min-h-20 bg-gray-50 py-10 p-10">
                     <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 font-serif tracking-wide">Lista de Productos</h2>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
-                        {productos.map((producto) => (
-                            <div
-                                key={producto.id}
-                                className="bg-white shadow-lg rounded-lg p-6 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 ease-in-out max-w-sm mx-auto"
-                            >
-                                <div className="mb-4">
-                                    <p className="text-xl font-semibold text-brown-700 text-center font-serif tracking-wide">{producto.nombre}</p>
-                                    <div className="flex justify-center items-center mb-5">
-                                        <img
-                                            src={producto.img}
-                                            alt={producto.nombre}
-                                            className="rounded-md object-cover"
-                                            style={{ width: '100%', height: '200px' }}
-                                        />
-                                    </div>
+                    {loading ? (
+                        <div className="flex justify-center items-center">
+                            <p className="text-xl font-semibold text-gray-700">Cargando...</p>
+                            <svg className="animate-spin ml-2 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+                            {productos.map((producto) => (
+                                <div
+                                    key={producto.id}
+                                    className="bg-white shadow-lg rounded-lg p-6 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 ease-in-out max-w-sm mx-auto"
+                                >
+                                    <div className="mb-4">
+                                        <p className="text-xl font-semibold text-brown-700 text-center font-serif tracking-wide">{producto.nombre}</p>
+                                        <div className="flex justify-center items-center mb-5">
+                                            <img
+                                                src={producto.img}
+                                                alt={producto.nombre}
+                                                className="rounded-md object-cover"
+                                                style={{ width: '100%', height: '200px' }}
+                                            />
+                                        </div>
 
-                                    <p className="text-gray-600 text-center">Descripción: {producto.description}</p>
-                                    <p className="text-gray-600 text-center">Precio: S/{producto.precio}</p>
+                                        <p className="text-gray-600 text-center">Descripción: {producto.description}</p>
+                                        <p className="text-gray-600 text-center">Precio: S/{producto.precio}</p>
+                                        <p className="text-gray-600 text-center">Categoría: {producto.categoria}</p>
+                                    </div>
+                                    <div className="flex justify-center space-x-4">
+                                        <button
+                                            onClick={() => {
+                                                setFormData(producto);
+                                                setIsEditing(true);
+                                                setShowModal(true);
+                                            }}
+                                            className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-300"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() => eliminarProducto(producto.id)}
+                                            className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 transition duration-300"
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -247,4 +335,3 @@ const AgregarProductos = () => {
 };
 
 export default AgregarProductos;
-
