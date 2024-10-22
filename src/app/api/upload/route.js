@@ -28,7 +28,7 @@ export async function POST(request) {
         // Subir el buffer directamente a Cloudinary usando una Promesa
         const response = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
-                { folder: "empleados", resource_type: "auto" },
+                { folder: "productos", resource_type: "auto" },
                 (error, result) => {
                     if (error) {
                         return reject(error);
