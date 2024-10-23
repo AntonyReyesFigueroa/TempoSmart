@@ -6,8 +6,9 @@ import ComponentSubirImg from '@/components/subir-imagen';
 
 const API_URL = process.env.NEXT_PUBLIC_API_PRODUCTOS;
 
-const AgregarProductos = () => {
+export default function ProductList() {
     const [productos, setProductos] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [formData, setFormData] = useState({
         nombre: '',
         precio: '',
@@ -15,124 +16,127 @@ const AgregarProductos = () => {
         categoria: '',
         img: '/cafe.png', // Imagen por defecto
     });
-    const [isEditing, setIsEditing] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [getUrlImage, setGetUrlImage] = useState('/cafe.png'); // Imagen por defecto
     const [loading, setLoading] = useState(false);
     const [uploadingImage, setUploadingImage] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
 
-    // Cargar los productos al montar el componente
+    // Fetch productos de la API al cargar el componente
     useEffect(() => {
-        cargarProductos();
+        fetchProductos();
     }, []);
 
-    const cargarProductos = async () => {
+    const fetchProductos = async () => {
         setLoading(true);
         try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
-            // Ordenamos los productos por ID de manera descendente
-            setProductos(data.sort((a, b) => b.id - a.id));
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            setProductos(data.reverse()); // Mostrar productos en orden inverso
         } catch (error) {
-            console.error('Error al cargar productos:', error);
-            Swal.fire('Error', 'Hubo un problema al cargar los productos.', 'error');
-        }
-        setLoading(false);
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            if (isEditing) {
-                // Actualizamos el producto en el servidor
-                await fetch(`${API_URL}/${formData.id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
-                Swal.fire('Producto Actualizado', 'El producto ha sido actualizado correctamente', 'success');
-                // Actualizamos el producto directamente en el estado
-                setProductos((prevProductos) =>
-                    prevProductos.map((producto) =>
-                        producto.id === formData.id ? { ...producto, ...formData } : producto
-                    )
-                );
-            } else {
-                // Agregamos un nuevo producto
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
-                const nuevoProducto = await response.json();
-                Swal.fire('Producto Agregado', 'El producto ha sido agregado correctamente', 'success');
-                setProductos([nuevoProducto, ...productos]); // Añadir el nuevo producto al inicio
-            }
-            setShowModal(false);
-            resetForm();
-        } catch (error) {
-            console.error('Error al agregar/editar producto:', error);
-            Swal.fire('Error', 'Hubo un problema al guardar el producto.', 'error');
+            console.error('Error fetching productos:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const eliminarProducto = async (id) => {
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: 'No podrás revertir esto',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminarlo!',
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                    Swal.fire('Eliminado', 'El producto ha sido eliminado.', 'success');
-                    setProductos(productos.filter((producto) => producto.id !== id));
-                } catch (error) {
-                    console.error('Error al eliminar producto:', error);
-                    Swal.fire('Error', 'Hubo un problema al eliminar el producto.', 'error');
-                }
-            }
-        });
-    };
-
+    // Resetear formulario
     const resetForm = () => {
         setFormData({
             nombre: '',
             precio: '',
             description: '',
             categoria: '',
-            img: '/cafe.png', // Reinicia la imagen a la predeterminada
+            img: '/cafe.png', // Imagen por defecto al agregar
         });
-        setIsEditing(false);
+        setGetUrlImage('/cafe.png'); // Imagen por defecto al agregar
     };
 
-    // Función para gestionar la subida de imagen
-    const handleImageUpload = (url) => {
-        setFormData({ ...formData, img: url });
-        setUploadingImage(false); // Desactiva el estado de "cargando" una vez que se ha subido
+    // Manejar cambios en el formulario
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
     };
 
-    // Filtrar productos basados en la búsqueda
+    // Validar campos del formulario
+    const validateProduct = ({ nombre, precio, description, categoria }) => {
+        if (nombre.length > 100) {
+            Swal.fire('Error', 'El nombre no puede exceder los 100 caracteres', 'error');
+            return false;
+        }
+        if (precio <= 0 || precio > 999) {
+            Swal.fire('Error', 'El precio debe estar entre 1 y 999', 'error');
+            return false;
+        }
+        if (description.length > 200) {
+            Swal.fire('Error', 'La descripción no puede exceder los 200 caracteres', 'error');
+            return false;
+        }
+        if (!categoria) {
+            Swal.fire('Error', 'Debe seleccionar una categoría', 'error');
+            return false;
+        }
+        return true;
+    };
+
+    // Manejar el submit del formulario
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const producto = { ...formData, img: getUrlImage || '/cafe.png' };
+
+        if (!validateProduct(producto)) return;
+
+        try {
+            const res = isEditing
+                ? await fetch(`${API_URL}/${producto.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(producto),
+                })
+                : await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(producto),
+                });
+
+            if (res.ok) {
+                fetchProductos(); // Actualizar la lista de productos
+                Swal.fire('Éxito', isEditing ? 'Producto editado correctamente' : 'Producto agregado correctamente', 'success');
+                setShowModal(false);
+                resetForm();
+            } else {
+                throw new Error('Error al agregar/editar el producto');
+            }
+        } catch (error) {
+            Swal.fire('Error', error.message, 'error');
+        }
+    };
+
+    // Eliminar producto
+    const eliminarProducto = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE',
+            });
+            if (res.ok) {
+                fetchProductos(); // Actualizar la lista de productos
+                Swal.fire('Éxito', 'Producto eliminado correctamente', 'success');
+            } else {
+                throw new Error('Error al eliminar el producto');
+            }
+        } catch (error) {
+            Swal.fire('Error', error.message, 'error');
+        }
+    };
+
+    // Filtrar productos por búsqueda
     const productosFiltrados = productos.filter((producto) =>
-        producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        producto.precio.toString().includes(searchTerm) ||
-        producto.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+        [producto.nombre, producto.categoria, producto.precio]
+            .join(' ')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -143,6 +147,7 @@ const AgregarProductos = () => {
                         onClick={() => {
                             resetForm();
                             setShowModal(true);
+                            setIsEditing(false); // Modo agregar
                         }}
                         className="bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 transition duration-300 ease-in-out mt-10"
                     >
@@ -161,12 +166,11 @@ const AgregarProductos = () => {
                     />
                 </div>
 
+                {/* Modal para agregar o editar productos */}
                 {showModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50 overflow-y-auto transition-opacity duration-300">
                         <div className="bg-white rounded-lg p-8 w-full max-w-lg space-y-6 h-auto max-h-screen overflow-y-auto">
-                            <h2 className="text-2xl font-bold text-center">
-                                {isEditing ? 'Editar Producto' : 'Añadir Producto'}
-                            </h2>
+                            <h2 className="text-2xl font-bold text-center">{isEditing ? 'Editar Producto' : 'Añadir Producto'}</h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <label className="block text-gray-700 font-semibold mb-2">Nombre del Producto:</label>
@@ -228,11 +232,7 @@ const AgregarProductos = () => {
                                     {uploadingImage ? (
                                         <p>Cargando imagen...</p>
                                     ) : (
-                                        <ComponentSubirImg
-                                            setGetUrlImage={(url) => handleImageUpload(url)}
-                                            getUrlImage={formData.img}
-                                            setUploading={setUploadingImage} // Esto activará el estado de "subiendo"
-                                        />
+                                        <ComponentSubirImg setGetUrlImage={setGetUrlImage} getUrlImage={getUrlImage} />
                                     )}
                                 </div>
 
@@ -259,10 +259,9 @@ const AgregarProductos = () => {
                     </div>
                 )}
 
+                {/* Lista de productos */}
                 <div className="min-h-20 bg-gray-50 py-10 p-10">
-                    <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 font-serif tracking-wide">
-                        Lista de Productos
-                    </h2>
+                    <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 font-serif tracking-wide">Lista de Productos</h2>
 
                     {loading ? (
                         <div className="flex justify-center items-center">
@@ -276,12 +275,10 @@ const AgregarProductos = () => {
                                     className="bg-white shadow-lg rounded-lg p-6 flex flex-col justify-between hover:shadow-xl transition-shadow duration-300 ease-in-out max-w-sm mx-auto"
                                 >
                                     <div className="mb-4">
-                                        <p className="text-xl font-semibold text-brown-700 text-center font-serif tracking-wide">
-                                            {producto.nombre}
-                                        </p>
+                                        <p className="text-xl font-semibold text-brown-700 text-center font-serif tracking-wide">{producto.nombre}</p>
                                         <div className="flex justify-center items-center mb-5">
                                             <img
-                                                src={producto.img}
+                                                src={producto.img || '/cafe.png'} // Mostrar imagen del producto o la imagen por defecto
                                                 alt={producto.nombre}
                                                 className="rounded-md object-cover"
                                                 style={{ width: '100%', height: '200px' }}
@@ -296,6 +293,7 @@ const AgregarProductos = () => {
                                             onClick={() => {
                                                 setFormData(producto);
                                                 setIsEditing(true);
+                                                setGetUrlImage(producto.img || '/cafe.png'); // Mostrar la imagen actual en el modal de edición
                                                 setShowModal(true);
                                             }}
                                             className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition duration-300"
@@ -317,6 +315,4 @@ const AgregarProductos = () => {
             </div>
         </div>
     );
-};
-
-export default AgregarProductos;
+}
