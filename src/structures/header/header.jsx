@@ -1,50 +1,64 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { motion, useInView } from 'framer-motion'
-import Cookies from 'js-cookie'
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion, useInView } from 'framer-motion';
+import Cookies from 'js-cookie';
 
 const Header = () => {
-    const [isOpen, setIsOpen] = useState(false)
-    const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [isOpen, setIsOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userType, setUserType] = useState(null); // Agregamos el estado para el tipo de usuario
+    const router = useRouter();
 
-    // Check if the user is logged in based on cookie
+    // Verificar la cookie de sesión y tipo_usuario al cargar el componente
     useEffect(() => {
         const sessionCookie = Cookies.get('session');
-        if (sessionCookie) {
+        const userTypeCookie = Cookies.get('tipo_usuario');
+
+        if (sessionCookie === 'conectado' && userTypeCookie) {
             setIsLoggedIn(true);
+            setUserType(userTypeCookie);
+        } else {
+            setIsLoggedIn(false);
+            setUserType(null);
         }
     }, []);
 
-    const handleLogin = () => {
-        Cookies.set('session', 'active', { expires: 7 });  // Set a cookie that expires in 7 days
-        setIsLoggedIn(true);
+    // Manejar login y logout, además de eliminar las cookies correspondientes
+    const handleLoginLogout = () => {
+        const sessionCookie = Cookies.get('session');
+
+        if (sessionCookie === 'conectado') {
+            // Si está conectado, cerrar sesión
+            Cookies.remove('session');
+            Cookies.remove('tipo_usuario');
+            setIsLoggedIn(false);
+            setUserType(null);
+            router.push('/login');
+        } else {
+            // Si no está conectado, iniciar sesión
+            Cookies.set('session', 'conectado', { expires: 7 });
+            router.push('/login'); // Redirigir a la página de login
+        }
     };
 
-    const handleLogout = () => {
-        Cookies.remove('session');  // Remove the cookie
-        setIsLoggedIn(false);
-    };
-
-    // Reference for animations when the header comes into view
     const headerRef = useRef(null);
     const isInView = useInView(headerRef);
 
     return (
         <>
-            {/* Header */}
             <motion.header
                 ref={headerRef}
                 initial={{ opacity: 0, y: -50 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}} // Header animates when in view
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5 }}
                 className="sticky top-0 left-0 w-full bg-white text-brown-700 shadow-lg z-50"
-                style={{ height: '80px' }}  // Asegura que ocupe espacio
+                style={{ height: '80px' }}
             >
                 <div className="container mx-auto flex justify-between items-center p-4">
-                    {/* Logo */}
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={isInView ? { scale: 1, opacity: 1 } : {}}
@@ -52,7 +66,7 @@ const Header = () => {
                     >
                         <Link href="/">
                             <Image
-                                src="/TempoSmart.png" // Ruta del logo en alta resolución
+                                src="/TempoSmart.png"
                                 alt="TempoSmart Cafetería"
                                 width={80}
                                 height={80}
@@ -61,7 +75,6 @@ const Header = () => {
                         </Link>
                     </motion.div>
 
-                    {/* Title */}
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -72,124 +85,50 @@ const Header = () => {
                         </Link>
                     </motion.div>
 
-                    {/* Menu for desktop */}
                     <motion.nav
                         className="hidden md:flex space-x-6 items-center"
                         initial={{ opacity: 0, x: 50 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ duration: 0.5, delay: 0.6 }}
                     >
-                        <motion.div
-                            whileHover={{ scale: 1.05, color: '#4E342E' }}
-                            transition={{ type: "spring", stiffness: 200 }}
-                        >
-                            <Link href="/reservas" className="text-md font-light text-brown-700 hover:text-brown-900 transition duration-300 ease-in-out">Reservas</Link>
+                        {/* Mostrar rutas según el tipo de usuario */}
+                        {userType === 'administrador' && (
+                            <>
+                                <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                                    <Link href="/reservas" className="text-md font-light hover:text-brown-900">Reservas</Link>
+                                </motion.div>
+
+                                <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                                    <Link href="/agregar-productos" className="text-md font-light hover:text-brown-900">Agregar Productos</Link>
+                                </motion.div>
+
+                            </>
+                        )}
+
+                        {userType === 'estudiante' && (
+                            <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                                <Link href="/pedidos" className="text-md font-light hover:text-brown-900">Pedidos</Link>
+                            </motion.div>
+                        )}
+
+                        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                            <Link href="/contacto" className="text-md font-light hover:text-brown-900">Contacto</Link>
                         </motion.div>
 
-                        <motion.div
-                            whileHover={{ scale: 1.05, color: '#4E342E' }}
-                            transition={{ type: "spring", stiffness: 200 }}
-                        >
-                            <Link href="/pedidos" className="text-md font-light text-brown-700 hover:text-brown-900 transition duration-300 ease-in-out">Pedidos</Link>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ scale: 1.05, color: '#4E342E' }}
-                            transition={{ type: "spring", stiffness: 200 }}
-                        >
-                            <Link href="/agregar-productos" className="text-md font-light text-brown-700 hover:text-brown-900 transition duration-300 ease-in-out">Agregar Productos</Link>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ scale: 1.05, color: '#4E342E' }}
-                            transition={{ type: "spring", stiffness: 200 }}
-                        >
-                            <Link href="/contacto" className="text-md font-light text-brown-700 hover:text-brown-900 transition duration-300 ease-in-out">Contacto</Link>
-                        </motion.div>
-
-                        {/* Login/Logout Button for desktop */}
+                        {/* Botón de iniciar/cerrar sesión */}
                         <motion.div>
-                            {isLoggedIn ? (
-                                <button
-                                    onClick={handleLogout}
-                                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-400 transition duration-300"
-                                >
-                                    Cerrar Sesión
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleLogin}
-                                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-400 transition duration-300"
-                                >
-                                    Iniciar Sesión
-                                </button>
-                            )}
+                            <button
+                                onClick={handleLoginLogout}
+                                className={`px-4 py-2 ${isLoggedIn ? 'bg-red-500' : 'bg-green-500'} text-white rounded hover:bg-opacity-80`}
+                            >
+                                {isLoggedIn ? 'Cerrar Sesión' : 'Iniciar Sesión'}
+                            </button>
                         </motion.div>
                     </motion.nav>
-
-                    {/* Hamburger Menu for mobile */}
-                    <motion.button
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                        transition={{ duration: 0.5, delay: 0.9 }}
-                        className="md:hidden"
-                        onClick={() => setIsOpen(!isOpen)}
-                    >
-                        <svg
-                            className="w-6 h-6"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
-                            />
-                        </svg>
-                    </motion.button>
                 </div>
-
-                {/* Mobile Menu */}
-                {isOpen && (
-                    <motion.nav
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                        className="md:hidden bg-white text-brown-700"
-                    >
-                        <ul className="space-y-4 p-4">
-                            <li><Link href="/reservas" className="hover:text-brown-900 transition duration-300 ease-in-out">Reservas</Link></li>
-                            <li><Link href="/pedidos" className="hover:text-brown-900 transition duration-300 ease-in-out">Pedidos</Link></li>
-                            <li><Link href="/agregar-productos" className="hover:text-brown-900 transition duration-300 ease-in-out">Agregar Productos</Link></li>
-                            <li><Link href="/contacto" className="hover:text-brown-900 transition duration-300 ease-in-out">Contacto</Link></li>
-
-                            {/* Login/Logout Button in mobile menu */}
-                            <li>
-                                {isLoggedIn ? (
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full text-left px-4 py-2 bg-red-500 text-white rounded hover:bg-red-400 transition duration-300"
-                                    >
-                                        Cerrar Sesión
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleLogin}
-                                        className="w-full text-left px-4 py-2 text-center bg-green-500 text-white rounded hover:bg-green-400 transition duration-300"
-                                    >
-                                        Iniciar Sesión
-                                    </button>
-                                )}
-                            </li>
-                        </ul>
-                    </motion.nav>
-                )}
             </motion.header>
         </>
-    )
-}
+    );
+};
 
-export default Header
+export default Header;
