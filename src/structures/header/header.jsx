@@ -10,7 +10,7 @@ import Cookies from 'js-cookie';
 const Header = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userType, setUserType] = useState(null); // Agregamos el estado para el tipo de usuario
+    const [userType, setUserType] = useState(null);
     const router = useRouter();
 
     // Verificar la cookie de sesión y tipo_usuario al cargar el componente
@@ -32,16 +32,14 @@ const Header = () => {
         const sessionCookie = Cookies.get('session');
 
         if (sessionCookie === 'conectado') {
-            // Si está conectado, cerrar sesión
             Cookies.remove('session');
             Cookies.remove('tipo_usuario');
             setIsLoggedIn(false);
             setUserType(null);
             router.push('/login');
         } else {
-            // Si no está conectado, iniciar sesión
             Cookies.set('session', 'conectado', { expires: 7 });
-            router.push('/login'); // Redirigir a la página de login
+            router.push('/login');
         }
     };
 
@@ -85,8 +83,18 @@ const Header = () => {
                         </Link>
                     </motion.div>
 
+                    {/* Botón hamburguesa para móvil */}
+                    <div className="md:hidden flex items-center">
+                        <button onClick={() => setIsOpen(!isOpen)} className="focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Navegación para pantallas grandes */}
                     <motion.nav
-                        className="hidden md:flex space-x-6 items-center"
+                        className={`hidden md:flex space-x-6 items-center ${isOpen ? 'block' : 'hidden'}`}
                         initial={{ opacity: 0, x: 50 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ duration: 0.5, delay: 0.6 }}
@@ -101,7 +109,6 @@ const Header = () => {
                                 <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
                                     <Link href="/agregar-productos" className="text-md font-light hover:text-brown-900">Agregar Productos</Link>
                                 </motion.div>
-
                             </>
                         )}
 
@@ -126,6 +133,35 @@ const Header = () => {
                         </motion.div>
                     </motion.nav>
                 </div>
+
+                {/* Menú desplegable para móvil */}
+                {isOpen && (
+                    <motion.nav
+                        className="md:hidden bg-white shadow-lg"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                    >
+                        <div className="flex flex-col p-4">
+                            {userType === 'administrador' && (
+                                <>
+                                    <Link href="/reservas" className="py-2 text-brown-700 hover:text-brown-900">Reservas</Link>
+                                    <Link href="/agregar-productos" className="py-2 text-brown-700 hover:text-brown-900">Agregar Productos</Link>
+                                </>
+                            )}
+                            {userType === 'estudiante' && (
+                                <Link href="/pedidos" className="py-2 text-brown-700 hover:text-brown-900">Pedidos</Link>
+                            )}
+                            <Link href="/contacto" className="py-2 text-brown-700 hover:text-brown-900">Contacto</Link>
+                            <button
+                                onClick={handleLoginLogout}
+                                className={`py-2 px-4 w-full ${isLoggedIn ? 'bg-red-500' : 'bg-green-500'} text-white rounded hover:bg-opacity-80`}
+                            >
+                                {isLoggedIn ? 'Cerrar Sesión' : 'Iniciar Sesión'}
+                            </button>
+                        </div>
+                    </motion.nav>
+                )}
             </motion.header>
         </>
     );

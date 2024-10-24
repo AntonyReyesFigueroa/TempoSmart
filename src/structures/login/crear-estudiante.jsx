@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 import ComponentSubirImg from '@/components/subir-imagen';
+import { useRouter } from 'next/navigation'; // Importar el hook useRouter
 
 const API_URL = process.env.NEXT_PUBLIC_API_USER;
 
@@ -28,6 +29,7 @@ export default function CrearEstudiante({ setShowModal }) {
         carrera: '',
         img: '/user.png',
     });
+    const router = useRouter(); // Instancia del router
 
     // Crear cuenta de estudiante
     const handleCreateAccount = async (e) => {
@@ -35,7 +37,9 @@ export default function CrearEstudiante({ setShowModal }) {
         const { codEstudiante, password, nombre, carrera } = newStudent;
 
         // Validar los campos
-        if (codEstudiante.length !== 9 || !/N\d{8}/.test(codEstudiante)) {
+        if (codEstudiante.length !== 9
+            //  || !/N\d{8}/.test(codEstudiante)
+        ) {
             Swal.fire('Error', 'El código de estudiante debe tener 9 caracteres y el formato N00402307', 'error');
             return;
         }
@@ -66,6 +70,7 @@ export default function CrearEstudiante({ setShowModal }) {
             if (res.ok) {
                 Swal.fire('Cuenta Creada', 'Tu cuenta se ha creado exitosamente', 'success');
                 setShowModal(false); // Cerrar el modal
+                router.reload(); // Recargar la página para reflejar los cambios
             }
         } catch (error) {
             console.error('Error al crear la cuenta', error);
