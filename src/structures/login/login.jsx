@@ -41,7 +41,7 @@ export default function Login() {
 
         if (user) {
             Swal.fire('Bienvenido', 'Ingreso exitoso', 'success');
-            Cookies.set('tipo_usuario', 'estudiante'); // Guardar tipo de usuario en cookie
+            Cookies.set('tipo_usuario', 'estudiante');
             Cookies.set('id', user.id); // Guardar el ID del usuario en cookie
             router.push('/pedidos');
         } else {

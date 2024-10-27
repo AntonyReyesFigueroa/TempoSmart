@@ -13,12 +13,10 @@ const Header = () => {
     const [userType, setUserType] = useState(null);
     const router = useRouter();
 
-    // Verificar la cookie de sesión y tipo_usuario al cargar el componente
+    // Verificar tipo_usuario al cargar el componente
     useEffect(() => {
-        const sessionCookie = Cookies.get('session');
         const userTypeCookie = Cookies.get('tipo_usuario');
-
-        if (sessionCookie === 'conectado' && userTypeCookie) {
+        if (userTypeCookie) {
             setIsLoggedIn(true);
             setUserType(userTypeCookie);
         } else {
@@ -27,19 +25,16 @@ const Header = () => {
         }
     }, []);
 
-    // Manejar login y logout, además de eliminar las cookies correspondientes
+    // Manejar login y logout
     const handleLoginLogout = () => {
-        const sessionCookie = Cookies.get('session');
-
-        if (sessionCookie === 'conectado') {
-            Cookies.remove('session');
-            Cookies.remove('tipo_usuario');
+        if (isLoggedIn) {
+            Cookies.remove('tipo_usuario'); // Eliminar cookie tipo_usuario
+            Cookies.remove('id');
             setIsLoggedIn(false);
             setUserType(null);
-            router.push('/login');
+            router.push('/login'); // Redirigir al login
         } else {
-            Cookies.set('session', 'conectado', { expires: 7 });
-            router.push('/login');
+            router.push('/login'); // Redirigir al login para iniciar sesión
         }
     };
 
@@ -54,7 +49,7 @@ const Header = () => {
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.5 }}
                 className="sticky top-0 left-0 w-full bg-white text-brown-700 shadow-lg z-50"
-                style={{ height: '80px' }}
+                style={{ height: '80px' }} // Asegura que el header no se vuelva transparente
             >
                 <div className="container mx-auto flex justify-between items-center p-4">
                     <motion.div
@@ -69,6 +64,7 @@ const Header = () => {
                                 width={80}
                                 height={80}
                                 className='rounded-full object-cover'
+                                style={{ width: 'auto', height: 'auto' }}
                             />
                         </Link>
                     </motion.div>
@@ -78,7 +74,7 @@ const Header = () => {
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ duration: 0.5, delay: 0.3 }}
                     >
-                        <Link href="/" className="text-3xl font-serif mx-4 text-brown-800 font-bold">
+                        <Link href="/" className="text-3xl font-serif mx-4 text-brown-700 font-bold">
                             TempoSmart
                         </Link>
                     </motion.div>
@@ -94,7 +90,7 @@ const Header = () => {
 
                     {/* Navegación para pantallas grandes */}
                     <motion.nav
-                        className={`hidden md:flex space-x-6 items-center ${isOpen ? 'block' : 'hidden'}`}
+                        className={`hidden md:flex space-x-6 items-center`}
                         initial={{ opacity: 0, x: 50 }}
                         animate={isInView ? { opacity: 1, x: 0 } : {}}
                         transition={{ duration: 0.5, delay: 0.6 }}
@@ -105,22 +101,35 @@ const Header = () => {
                                 <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
                                     <Link href="/reservas" className="text-md font-light hover:text-brown-900">Reservas</Link>
                                 </motion.div>
-
                                 <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
                                     <Link href="/agregar-productos" className="text-md font-light hover:text-brown-900">Agregar Productos</Link>
                                 </motion.div>
                             </>
                         )}
-
                         {userType === 'estudiante' && (
-                            <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
-                                <Link href="/pedidos" className="text-md font-light hover:text-brown-900">Pedidos</Link>
-                            </motion.div>
+                            <>
+                                <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                                    <>
+                                        <Link href="/reservas" className="py-2 pr-5 text-brown-700 hover:text-brown-900">Reservas</Link>
+                                        <Link href="/pedidos" className="py-2 pl-5 text-brown-700 hover:text-brown-900">Pedidos</Link>
+                                    </>
+                                </motion.div>
+                            </>
                         )}
-
-                        <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                        {/* Si no hay cookie de tipo_usuario, mostrar estas opciones */}
+                        {userType === null && (
+                            <>
+                                <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                                    <Link href="/login" className="text-md font-light hover:text-brown-900">Reservas</Link>
+                                </motion.div>
+                                <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
+                                    <Link href="/login" className="text-md font-light hover:text-brown-900">Pedidos</Link>
+                                </motion.div>
+                            </>
+                        )}
+                        {/* <motion.div whileHover={{ scale: 1.05 }} transition={{ type: 'spring', stiffness: 200 }}>
                             <Link href="/contacto" className="text-md font-light hover:text-brown-900">Contacto</Link>
-                        </motion.div>
+                        </motion.div> */}
 
                         {/* Botón de iniciar/cerrar sesión */}
                         <motion.div>
@@ -150,9 +159,19 @@ const Header = () => {
                                 </>
                             )}
                             {userType === 'estudiante' && (
-                                <Link href="/pedidos" className="py-2 text-brown-700 hover:text-brown-900">Pedidos</Link>
+                                <>
+                                    <Link href="/reservas" className="py-2 text-brown-700 hover:text-brown-900">Reservas</Link>
+                                    <Link href="/pedidos" className="py-2 text-brown-700 hover:text-brown-900">Pedidos</Link>
+                                </>
                             )}
-                            <Link href="/contacto" className="py-2 text-brown-700 hover:text-brown-900">Contacto</Link>
+                            {/* Si no hay cookie de tipo_usuario, mostrar estas opciones */}
+                            {userType === null && (
+                                <>
+                                    <Link href="/login" className="py-2 text-brown-700 hover:text-brown-900">Reservas</Link>
+                                    <Link href="/login" className="py-2 text-brown-700 hover:text-brown-900">Pedidos</Link>
+                                </>
+                            )}
+                            {/* <Link href="/contacto" className="py-2 text-brown-700 hover:text-brown-900">Contacto</Link> */}
                             <button
                                 onClick={handleLoginLogout}
                                 className={`py-2 px-4 w-full ${isLoggedIn ? 'bg-red-500' : 'bg-green-500'} text-white rounded hover:bg-opacity-80`}
