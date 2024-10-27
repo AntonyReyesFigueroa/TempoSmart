@@ -7,6 +7,9 @@ import Product from './Product';
 import Cookies from 'js-cookie';
 
 const API_PRODUCTS = process.env.NEXT_PUBLIC_API_PRODUCTOS;
+const API_URL = process.env.NEXT_PUBLIC_API_USER;
+
+
 
 export default function Pedidos() {
     const [products, setProducts] = useState([]);
@@ -17,31 +20,20 @@ export default function Pedidos() {
     const [user, setUser] = useState()
 
 
-
-    console.log(cart);
-    const id = Cookies.get('id');
-    console.log(id);
-
-
-
-    const getUser = async (userId) => {
-        const API_URL = process.env.NEXT_PUBLIC_API_USER;
-
-        try {
-            const response = await fetch(`${API_URL}/${userId}`);
-
-            if (!response.ok) {
-                throw new Error(`Error al obtener el usuario: ${response.statusText}`);
+    // Cargar productos al cargar el componente
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const id = Cookies.get('id');
+                const res = await fetch(`${API_URL}/${id}`);
+                const data = await res.json();
+                setUser(data)
+            } catch (error) {
+                console.error('Error al cargar los productos', error);
             }
-
-            const userData = await response.json();
-            return userData; // Devuelve los datos del usuario
-        } catch (error) {
-            console.error(error);
-            return null; // Devuelve null en caso de error
-        }
-    };
-
+        };
+        fetchUsers();
+    }, []);
 
 
     // Cargar productos al cargar el componente
@@ -52,7 +44,7 @@ export default function Pedidos() {
                 const data = await res.json();
                 setProducts(data);
                 setFilteredProducts(data);
-                setUser()
+
             } catch (error) {
                 console.error('Error al cargar los productos', error);
             }
@@ -99,7 +91,7 @@ export default function Pedidos() {
         <div className="flex flex-col md:flex-row bg-gray-50 min-h-screen">
             {/* Carrito de Compras */}
             <div className="p-4 bg-gradient-to-r from-amber-900 to-amber-950 shadow-lg rounded-lg mb-4 md:mb-0 md:w-1/4">
-                <Cart cart={cart} saveOrders={saveOrders} />
+                <Cart cart={cart} saveOrders={saveOrders} user={user} setCart={setCart} />
             </div>
 
             {/* Panel de Productos */}

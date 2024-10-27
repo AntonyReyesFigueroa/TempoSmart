@@ -16,6 +16,7 @@ export default function LoginAdministrador({ setIsAdminModal }) {
         const adminAccounts = [
             { user: 'antonyreyes', password: 'qwert' },
             { user: 'esmeupn', password: 'esmeupn@' },
+            { user: 'admin071213', password: '071213@' },
         ];
 
         const isAdmin = adminAccounts.some(

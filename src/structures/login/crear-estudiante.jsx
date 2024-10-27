@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import ComponentSubirImg from '@/components/subir-imagen';
 import { useRouter } from 'next/navigation'; // Importar el hook useRouter
@@ -31,16 +31,32 @@ export default function CrearEstudiante({ setShowModal }) {
     });
     const router = useRouter(); // Instancia del router
 
+    // Función para comprobar si el codEstudiante ya existe
+    const checkCodEstudianteExists = async (codEstudiante) => {
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            // Verificar si el codEstudiante ya existe
+            return data.some(user => user.codEstudiante === codEstudiante);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            return false; // Retornar false en caso de error
+        }
+    };
+
     // Crear cuenta de estudiante
     const handleCreateAccount = async (e) => {
         e.preventDefault();
         const { codEstudiante, password, nombre, carrera } = newStudent;
 
         // Validar los campos
-        if (codEstudiante.length !== 9
-            //  || !/N\d{8}/.test(codEstudiante)
-        ) {
+        if (codEstudiante.length !== 9) {
             Swal.fire('Error', 'El código de estudiante debe tener 9 caracteres y el formato N00402307', 'error');
+            return;
+        }
+
+        if (await checkCodEstudianteExists(codEstudiante)) {
+            Swal.fire('Error', 'El código de estudiante ya existe', 'error');
             return;
         }
 
@@ -70,7 +86,7 @@ export default function CrearEstudiante({ setShowModal }) {
             if (res.ok) {
                 Swal.fire('Cuenta Creada', 'Tu cuenta se ha creado exitosamente', 'success');
                 setShowModal(false); // Cerrar el modal
-                router.reload(); // Recargar la página para reflejar los cambios
+                // router.reload(); // Recargar la página para reflejar los cambios
             }
         } catch (error) {
             console.error('Error al crear la cuenta', error);

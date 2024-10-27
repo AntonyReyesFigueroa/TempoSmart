@@ -18,16 +18,17 @@ export default function Login() {
     const router = useRouter();
 
     // Cargar la información de los usuarios al cargar la página
+    const fetchUsers = async () => {
+        try {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            setUsers(data); // Guardar usuarios en el estado
+        } catch (error) {
+            console.error('Error al cargar los usuarios', error);
+        }
+    };
+
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                setUsers(data); // Guardar usuarios en el estado
-            } catch (error) {
-                console.error('Error al cargar los usuarios', error);
-            }
-        };
         fetchUsers();
     }, []);
 
@@ -47,6 +48,12 @@ export default function Login() {
         } else {
             Swal.fire('Error', 'Contraseña o código de estudiante incorrecto. Vuelve a intentarlo.', 'error');
         }
+    };
+
+    // Recargar usuarios después de crear una cuenta
+    const handleModalClose = () => {
+        setShowModal(false);
+        fetchUsers(); // Recargar usuarios al cerrar el modal
     };
 
     return (
@@ -99,7 +106,7 @@ export default function Login() {
                 {/* Modal para crear cuenta de estudiante */}
                 {showModal && (
                     <CrearEstudiante
-                        setShowModal={setShowModal}
+                        setShowModal={handleModalClose}
                     />
                 )}
 
