@@ -14,8 +14,8 @@ export default function AdminReservations() {
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                // Filtrar usuarios con pedidos
-                const usersWithOrders = data.filter(user => user.pedido.length > 0);
+                // Filtrar usuarios con pedidos y asegurarnos de que 'pedido' sea un array
+                const usersWithOrders = data.filter(user => Array.isArray(user.pedido) && user.pedido.length > 0);
                 setUsers(usersWithOrders);
             } catch (error) {
                 console.error('Error fetching users:', error);
@@ -49,7 +49,6 @@ export default function AdminReservations() {
         }
     };
 
-    // Función para eliminar un pedido individualmente
     const deleteOrder = async (userId, order) => {
         try {
             const userToUpdate = users.find(user => user.id === userId);
@@ -99,7 +98,7 @@ export default function AdminReservations() {
                     <div key={user.id} className="border rounded-lg shadow-lg p-4 bg-white mb-4">
                         <h2 className="font-bold text-xl">{user.nombre} (COD: {user.codEstudiante})</h2>
                         <h2 className="font-bold text-lg">Carrera: {user.carrera}</h2>
-                        {user.pedido.map(order => {
+                        {Array.isArray(user.pedido) && user.pedido.length > 0 ? user.pedido.map(order => {
                             let orderClass = "p-4 my-2 rounded-lg transition-transform duration-300 ";
 
                             // Determinar el color de fondo según el estado y cancelado
@@ -120,7 +119,11 @@ export default function AdminReservations() {
                                     <p><strong>Estado:</strong>
                                         <select
                                             value={order.estado}
-                                            onChange={e => updateOrder(user.id, { ...user, pedido: user.pedido.map(o => o.fecha === order.fecha && o.hora === order.hora ? { ...o, estado: e.target.value } : o) })}
+                                            onChange={e => {
+                                                const newOrder = { ...order, estado: e.target.value };
+                                                const updatedPedidos = user.pedido.map(o => o.fecha === order.fecha && o.hora === order.hora ? newOrder : o);
+                                                updateOrder(user.id, { ...user, pedido: updatedPedidos });
+                                            }}
                                             className="ml-2 p-1 border rounded"
                                         >
                                             <option value="Sin entregar">Sin entregar</option>
@@ -130,14 +133,22 @@ export default function AdminReservations() {
                                     <p><strong>Cancelado:</strong>
                                         <select
                                             value={order.cancelado}
-                                            onChange={e => updateOrder(user.id, { ...user, pedido: user.pedido.map(o => o.fecha === order.fecha && o.hora === order.hora ? { ...o, cancelado: e.target.value } : o) })}
+                                            onChange={e => {
+                                                const newOrder = { ...order, cancelado: e.target.value };
+                                                const updatedPedidos = user.pedido.map(o => o.fecha === order.fecha && o.hora === order.hora ? newOrder : o);
+                                                updateOrder(user.id, { ...user, pedido: updatedPedidos });
+                                            }}
                                             className="ml-2 p-1 border rounded"
                                         >
                                             <option value="No">No</option>
                                             <option value="Sí">Sí</option>
                                         </select>
                                     </p>
-                                    <p><strong>Consumo:</strong> {order.consumo.map(item => `${item.producto} (x${item.cantidad})`).join(', ')}</p>
+                                    <p>
+                                        <strong>Consumo:</strong> {Array.isArray(order.consumo) && order.consumo.length > 0
+                                            ? order.consumo.map(item => `${item.producto} (x${item.cantidad})`).join(', ')
+                                            : "Sin consumo registrado"}
+                                    </p>
                                     <button
                                         onClick={() => deleteOrder(user.id, order)}
                                         className="mt-2 bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600 transition duration-300"
@@ -146,7 +157,7 @@ export default function AdminReservations() {
                                     </button>
                                 </div>
                             );
-                        })}
+                        }) : <p>No hay pedidos para este usuario.</p>}
                     </div>
                 ))
             )}
